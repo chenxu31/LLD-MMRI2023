@@ -351,7 +351,7 @@ def depthwise_conv(in_ch, out_ch, dim=2, kernel_size=3, stride=1):
     else:
         assert 0
 
-    kernel_size = to_2tuple(kernel_size)
+    kernel_size = to_3tuple(kernel_size)
 
     return torch.nn.Sequential(
         conv_ob(in_ch, in_ch, kernel_size=kernel_size, stride=stride, padding=[x // 2 for x in kernel_size], groups=in_ch),
