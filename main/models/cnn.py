@@ -33,33 +33,19 @@ class CNNBase(nn.Module):
             util.native_norm(norm_type, NUM_FILTERS[0], dim=3),
             util.native_act(act_type),
         ]
-        """
         for i in range(NUM_DOWNSAMPLING):
-            nets.append(util.DepthwiseResidualBlock(NUM_FILTERS[i], dim=3, kernel_size=3, norm_type=norm_type, act_type=act_type))
-            nets.append(util.depthwise_conv(NUM_FILTERS[i], NUM_FILTERS[i + 1], dim=3, kernel_size=3, stride=2))
+            nets.append(util.DepthwiseResidualBlock(NUM_FILTERS[i], dim=3, kernel_size=3 if i == 0 else (1, 3, 3),
+                                                    norm_type=norm_type, act_type=act_type))
+            nets.append(util.depthwise_conv(NUM_FILTERS[i], NUM_FILTERS[i + 1], dim=3, kernel_size=3 if i == 0 else (1, 3, 3), stride=2))
             nets.append(util.native_norm(norm_type, NUM_FILTERS[i + 1], dim=3))
             nets.append(util.native_act(act_type))
 
         for i in range(num_rb):
-            nets.append(util.DepthwiseResidualBlock(NUM_FILTERS[NUM_DOWNSAMPLING], dim=3, kernel_size=3, norm_type=norm_type, act_type=act_type))
+            nets.append(util.DepthwiseResidualBlock(NUM_FILTERS[NUM_DOWNSAMPLING], dim=3, kernel_size=(1, 3, 3), norm_type=norm_type, act_type=act_type))
 
-        nets.append(util.depthwise_conv(NUM_FILTERS[NUM_DOWNSAMPLING], NUM_FILTERS[NUM_DOWNSAMPLING], dim=3, kernel_size=3))
+        nets.append(util.depthwise_conv(NUM_FILTERS[NUM_DOWNSAMPLING], NUM_FILTERS[NUM_DOWNSAMPLING], dim=3, kernel_size=(1, 3, 3)))
         nets.append(util.native_norm(norm_type, NUM_FILTERS[NUM_DOWNSAMPLING], dim=3))
         nets.append(util.native_act(act_type))
-        """
-        for i in range(NUM_DOWNSAMPLING):
-            nets.append(util.ResidualBlock(NUM_FILTERS[i], dim=3, norm_type=norm_type, act_type=act_type))
-            nets.append(torch.nn.Conv3d(NUM_FILTERS[i], NUM_FILTERS[i + 1], kernel_size=3, stride=2))
-            nets.append(util.native_norm(norm_type, NUM_FILTERS[i + 1], dim=3))
-            nets.append(util.native_act(act_type))
-
-        for i in range(num_rb):
-            nets.append(util.ResidualBlock(NUM_FILTERS[NUM_DOWNSAMPLING], dim=3, norm_type=norm_type, act_type=act_type))
-
-        nets.append(torch.nn.Conv3d(NUM_FILTERS[NUM_DOWNSAMPLING], NUM_FILTERS[NUM_DOWNSAMPLING], dim=3, kernel_size=3))
-        nets.append(util.native_norm(norm_type, NUM_FILTERS[NUM_DOWNSAMPLING], dim=3))
-        nets.append(util.native_act(act_type))
-
         nets.append(torch.nn.AdaptiveAvgPool3d(1))
         nets.append(torch.nn.Flatten())
         nets.append(torch.nn.Linear(NUM_FILTERS[NUM_DOWNSAMPLING], num_classes))
