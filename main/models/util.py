@@ -14,6 +14,7 @@ import torch
 import time
 import os
 import timm
+from timm.models.layers import to_2tuple
 
 """
 try:
@@ -350,8 +351,10 @@ def depthwise_conv(in_ch, out_ch, dim=2, kernel_size=3, stride=1):
     else:
         assert 0
 
+    kernel_size = to_2tuple(kernel_size)
+
     return torch.nn.Sequential(
-        conv_ob(in_ch, in_ch, kernel_size=kernel_size, stride=stride, padding=kernel_size // 2, groups=in_ch),
+        conv_ob(in_ch, in_ch, kernel_size=kernel_size, stride=stride, padding=[x // 2 for x in kernel_size], groups=in_ch),
         conv_ob(in_ch, out_ch, kernel_size=1),
     )
 
