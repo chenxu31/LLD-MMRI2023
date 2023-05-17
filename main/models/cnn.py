@@ -23,7 +23,7 @@ class CNNBase(nn.Module):
     A PyTorch impl of : `An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale`  -
         https://arxiv.org/abs/2010.11929
     """
-    def __init__(self, img_size=112, in_ch=3, num_classes=1000, num_rb=6, norm_type="group", act_type="relu"):
+    def __init__(self, img_size=112, in_ch=3, num_classes=1000, num_rb=12, norm_type="group", act_type="relu"):
         super().__init__()
 
         self.num_classes = num_classes
@@ -33,6 +33,7 @@ class CNNBase(nn.Module):
             util.native_norm(norm_type, NUM_FILTERS[0], dim=3),
             util.native_act(act_type),
         ]
+        """
         for i in range(NUM_DOWNSAMPLING):
             nets.append(util.DepthwiseResidualBlock(NUM_FILTERS[i], dim=3, kernel_size=3, norm_type=norm_type, act_type=act_type))
             nets.append(util.depthwise_conv(NUM_FILTERS[i], NUM_FILTERS[i + 1], dim=3, kernel_size=3, stride=2))
@@ -45,6 +46,20 @@ class CNNBase(nn.Module):
         nets.append(util.depthwise_conv(NUM_FILTERS[NUM_DOWNSAMPLING], NUM_FILTERS[NUM_DOWNSAMPLING], dim=3, kernel_size=3))
         nets.append(util.native_norm(norm_type, NUM_FILTERS[NUM_DOWNSAMPLING], dim=3))
         nets.append(util.native_act(act_type))
+        """
+        for i in range(NUM_DOWNSAMPLING):
+            nets.append(util.ResidualBlock(NUM_FILTERS[i], dim=3, norm_type=norm_type, act_type=act_type))
+            nets.append(torch.nn.Conv3d(NUM_FILTERS[i], NUM_FILTERS[i + 1], kernel_size=3, stride=2))
+            nets.append(util.native_norm(norm_type, NUM_FILTERS[i + 1], dim=3))
+            nets.append(util.native_act(act_type))
+
+        for i in range(num_rb):
+            nets.append(util.ResidualBlock(NUM_FILTERS[NUM_DOWNSAMPLING], dim=3, norm_type=norm_type, act_type=act_type))
+
+        nets.append(torch.nn.Conv3d(NUM_FILTERS[NUM_DOWNSAMPLING], NUM_FILTERS[NUM_DOWNSAMPLING], dim=3, kernel_size=3))
+        nets.append(util.native_norm(norm_type, NUM_FILTERS[NUM_DOWNSAMPLING], dim=3))
+        nets.append(util.native_act(act_type))
+
         nets.append(torch.nn.AdaptiveAvgPool3d(1))
         nets.append(torch.nn.Flatten())
         nets.append(torch.nn.Linear(NUM_FILTERS[NUM_DOWNSAMPLING], num_classes))
