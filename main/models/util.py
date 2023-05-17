@@ -14,7 +14,7 @@ import torch
 import time
 import os
 import timm
-from timm.models.layers import to_2tuple
+from timm.models.layers import to_3tuple
 
 """
 try:
