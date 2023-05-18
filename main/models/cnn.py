@@ -24,10 +24,12 @@ class CNNBase(nn.Module):
     A PyTorch impl of : `An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale`  -
         https://arxiv.org/abs/2010.11929
     """
-    def __init__(self, img_size=112, in_ch=3, num_classes=1000, num_rb=12, norm_type="group", act_type="relu"):
+    def __init__(self, img_size=112, in_ch=3, num_classes=1000, num_rb=12, drop_path_rate=0.1, norm_type="group", act_type="relu"):
         super().__init__()
 
         self.num_classes = num_classes
+
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, NUM_DOWNSAMPLING + num_rb)]
 
         nets = [
             torch.nn.Conv3d(in_ch, NUM_FILTERS[0], 3, padding=1),
@@ -35,13 +37,14 @@ class CNNBase(nn.Module):
             util.native_act(act_type),
         ]
         for i in range(NUM_DOWNSAMPLING):
-            nets.append(util.DepthwiseResidualBlock(NUM_FILTERS[i], dim=3, kernel_size=3, norm_type=norm_type, act_type=act_type))
-            nets.append(util.depthwise_conv(NUM_FILTERS[i], NUM_FILTERS[i + 1], dim=3, kernel_size=3, stride=2 if i == 0 else (1, 2, 2)))
+            nets.append(util.DepthwiseResidualBlock(NUM_FILTERS[i], dim=3, kernel_size=3, drop_path=dpr[i], norm_type=norm_type, act_type=act_type))
+            nets.append(util.depthwise_conv(NUM_FILTERS[i], NUM_FILTERS[i + 1], dim=3, kernel_size=3, stride=2))
             nets.append(util.native_norm(norm_type, NUM_FILTERS[i + 1], dim=3))
             nets.append(util.native_act(act_type))
 
         for i in range(num_rb):
-            nets.append(util.DepthwiseResidualBlock(NUM_FILTERS[NUM_DOWNSAMPLING], dim=3, kernel_size=3, norm_type=norm_type, act_type=act_type))
+            nets.append(util.DepthwiseResidualBlock(NUM_FILTERS[NUM_DOWNSAMPLING], dim=3, kernel_size=3,
+                                                    drop_path=dpr[NUM_DOWNSAMPLING + i], norm_type=norm_type, act_type=act_type))
 
         nets.append(util.depthwise_conv(NUM_FILTERS[NUM_DOWNSAMPLING], NUM_FILTERS[NUM_DOWNSAMPLING], dim=3, kernel_size=3))
         nets.append(util.native_norm(norm_type, NUM_FILTERS[NUM_DOWNSAMPLING], dim=3))
