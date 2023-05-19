@@ -11,10 +11,10 @@ import numpy
 
 def main(args):
     for i in range(1, 6):
-        cmd = "python validate.py --data_dir %s --val_anno_file %s --model uniformer_small_IL --results-dir %s " \
+        cmd = "python validate.py --data_dir %s --val_anno_file %s --model %s --results-dir %s " \
               "--score-dir %s --checkpoint %s" % \
               (os.path.join(args.data_dir, "images"), os.path.join(args.data_dir, "labels", "val_fold%d.txt" % i),
-               os.path.join(args.output_dir, "val_fold%d" % i), os.path.join(args.output_dir, "val_fold%d" % i),
+               args.model, os.path.join(args.output_dir, "val_fold%d" % i), os.path.join(args.output_dir, "val_fold%d" % i),
                os.path.join(args.checkpoint_dir, "fold%d" % i, "model_best.pth.tar"))
         os.system(cmd)
 
